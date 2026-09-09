@@ -1,14 +1,10 @@
 import express, { Request, Response } from "express";
-// import pool, { pool_Hr } from "./config/sqldb.ts";
+import { pool, pool_Hr } from "./config/sqldb.ts";
 import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
-// import user from "./Modules/Auth-Service/Routes/Auth.Route.ts";
-import candidate from "./Modules/hr-internship-service/Routes/Candidate.route.js";
-import application from "./Modules/hr-internship-service/Routes/Application.route.js";
-import interview from "./Modules/hr-internship-service/Routes/Interview.route.js";
-import offerLetter from "./Modules/hr-internship-service/Routes/OfferLetter.route.ts";
+import user from "./Module/Auth-Service/Routes/Auth.Route";
 
 dotenv.config();
 
@@ -33,12 +29,7 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
-// hr routes
-// app.use("/api/hr/candidate/", candidate);
-// app.use("/api/hr/Application/", application);
-// app.use("/api/hr/interview/", interview);
-// app.use("/api/hr/offer-letter/", offerLetter);
-
+// ping test
 app.get("/ping", async (req, res) => {
   try {
     const result = await pool_Hr.query(
@@ -54,6 +45,12 @@ app.get("/ping", async (req, res) => {
   }
 });
 
-app.listen(3002, () => {
+
+// ------------------------
+// auth route 
+app.use("/api/user/", user);
+
+
+app.listen(process.env.PORT, () => {
   console.log("Server running on port 3001");
 });
