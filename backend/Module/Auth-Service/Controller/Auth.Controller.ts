@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import {pool} from "../../../config/sqldb";
+import { pool, pool_Hr } from "../../../config/sqldb";
 import {
   passwordHash,
   jwtSign,
@@ -13,10 +13,12 @@ import { CLIENT_RENEG_WINDOW } from "node:tls";
 const db = pool as typeof pool & {
   query: (text: string, values?: unknown[]) => Promise<any>;
 };
-
+const db_hr = pool_Hr as typeof pool_Hr & {
+  query: (text: string, values?: unknown[]) => Promise<any>;
+};
 
 // -------------------------
-// cloudinary 
+// cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
   api_key: process.env.API_KEY,
@@ -34,7 +36,6 @@ const deleteImage = async (public_id: String) => {
     console.log(err);
   }
 };
-
 
 // -------------------------
 // create user
@@ -184,7 +185,6 @@ export const createUser = async (req: Request, res: Response) => {
   }
 };
 
-
 // -------------------------
 // login user
 export const loginUser = async (req: Request, res: Response) => {
@@ -253,7 +253,7 @@ export const loginUser = async (req: Request, res: Response) => {
       });
     }
 
-    console.log('userDetails?.role', userDetails?.roles)
+    console.log("userDetails?.role", userDetails?.roles);
 
     const token = await jwtSign(
       { email: email, user_id: userDetails?.id, role: userDetails?.roles },
@@ -274,7 +274,6 @@ export const loginUser = async (req: Request, res: Response) => {
   }
 };
 
-
 // -------------------------
 //  get User Detail
 export const getUserDetail = async (req: Request, res: Response) => {
@@ -282,7 +281,7 @@ export const getUserDetail = async (req: Request, res: Response) => {
   const email = req?.email;
   const role = req?.role;
   try {
-    console.log('user role :- \n', role)
+    console.log("user role :- \n", role);
     const userDetailFetched = await db.query(
       `
  SELECT
@@ -336,7 +335,6 @@ GROUP BY
     internalError(error, req, res);
   }
 };
-
 
 // -------------------------
 // edit user detail
@@ -408,4 +406,67 @@ export const editUserDetail = async (req: Request, res: Response) => {
   }
 };
 
+// --------------------------
+// get qualified candidates
+export const getQualifiedCandidates = async (req: Request, res: Response) => {
+  try {
+    const featchQualifiedCandidate = await db_hr.query(
+      `SELECT 
+    qc.id,
+    qc.candidate_id,
+    qc.application_id,
+    qc.interview_id,
 
+    -- Candidate details
+    jsonb_build_object(
+        'id', c.id,
+        'first_name', c.first_name,
+        'last_name', c.last_name,
+        'email', c.email,
+        'phone', c.phone,
+        'resume_url', c.resume_url
+    ) AS candidate,
+
+    -- Application details
+    jsonb_build_object(
+        'id', a.id,
+        'application_code', a.application_code,
+        'candidate_id', a.candidate_id,
+        'role', a.role,
+        'department', a.department,
+        'application_type', a.application_type,
+        'duration_months', a.duration_months,
+        'work_mode', a.work_mode,
+        'fee', a.fee,
+        'status', a.status
+    ) AS application
+
+FROM qualified_candidates qc
+
+INNER JOIN applications a 
+    ON qc.application_id = a.id
+
+INNER JOIN candidates c 
+    ON qc.candidate_id = c.id;
+      
+      `,
+      [],
+    );
+
+    if (featchQualifiedCandidate?.rows?.length == 0) {
+      return res
+        .status(400)
+        .json({ message: "error fetching the details", success: false });
+    }
+
+    const qualifiedCandidate = featchQualifiedCandidate?.rows[0];
+
+    return res.status(200).json({
+      messgae: "candidate detial fetched",
+      success: true,
+      qualifiedCandidate,
+    });
+  } catch (error: any) {
+    return internalError(error, req, res);
+  }
+};
