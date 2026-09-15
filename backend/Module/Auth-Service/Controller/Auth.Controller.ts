@@ -157,7 +157,7 @@ export const createUser = async (req: Request, res: Response) => {
         [userDetails.id],
       );
 
-      if (setUserRoles?.rows?.length == 0) {
+      if (setUserRoles?.rowCount == 0) {
         return res.status(404).json({
           success: false,
           message: "User not able to assign roles ",
@@ -248,7 +248,7 @@ export const loginUser = async (req: Request, res: Response) => {
     // console.log('isPasswordMatched', isPasswordMatched)
 
     if (!isPasswordMatched) {
-      return res.status(404).json({
+      return res.status(400).json({
         success: false,
         message: "Invalid credetials !!",
       });
