@@ -5,6 +5,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 
 import user from "./Module/Auth-Service/Routes/Auth.Route";
+import authorize from "./Module/Auth-Service/Routes/Authorize.Routes.ts";
 
 dotenv.config();
 
@@ -45,11 +46,10 @@ app.get("/ping", async (req, res) => {
   }
 });
 
-
 // ------------------------
-// auth route 
+// auth route
 app.use("/api/user/", user);
-
+app.use("/api/internal/authorization/", authorize);
 
 app.listen(process.env.PORT, () => {
   console.log("Server running on port 3002");

@@ -174,6 +174,7 @@ export const createUser = async (req: Request, res: Response) => {
 
     // console.log("token :- ", token);
     setCookies("ulSpaceToken", token, req, res);
+    console.log("set token :-\n", token);
 
     res.status(200).json({
       message: "user registered sent",
@@ -261,13 +262,15 @@ export const loginUser = async (req: Request, res: Response) => {
       "30d",
     );
 
-    // console.log("token :- ", token);
     setCookies("ulSpaceToken", token, req, res);
+    
+    console.log("token :- ", token);
 
     return res.status(200).json({
       success: false,
       message: "User Details Fetched !!",
       user: userDetails || null,
+      token: token,
     });
   } catch (error: any) {
     internalError(error, req, res);

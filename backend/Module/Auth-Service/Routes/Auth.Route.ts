@@ -36,4 +36,6 @@ router.get(
   getQualifiedCandidates,
 );
 
+
+
 export default router;
