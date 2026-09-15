@@ -42,7 +42,7 @@ export const setCookies = (
   console.log("set token", token);
   res.cookie(cookieName, token, {
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: "none",
     secure: true,
     expires: new Date(Date.now() + 3600000 * 24 * 30),
   });
