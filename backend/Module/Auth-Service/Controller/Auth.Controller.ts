@@ -45,8 +45,8 @@ export const createUser = async (req: Request, res: Response) => {
       name,
       email,
       password_hash,
-      role = "INTERN",
-      loginCode = null,
+      role = "ADMIN",
+      loginCode = "confirm",
     } = req.body;
 
     const hashedPassword = await passwordHash(String(password_hash));
@@ -147,7 +147,7 @@ export const createUser = async (req: Request, res: Response) => {
     }
 
     // ADMIN role register ------------------------------
-    if (role == "ADMIN" && loginCode == "conform") {
+    if (role == "ADMIN" && loginCode == "confirm") {
       const setUserRoles = await db.query(
         `INSERT INTO user_roles (user_id, role_id)
         SELECT $1, id

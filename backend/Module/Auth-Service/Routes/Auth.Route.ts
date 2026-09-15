@@ -11,7 +11,7 @@ import { Authorize } from "../../../middleware/authorize.middleware";
 
 const router = express.Router();
 
-router.post("/createUser", Authorize("users.create"), createUser);
+router.post("/createUser", createUser);
 router.post("/loginUser", loginUser);
 
 router.get(
