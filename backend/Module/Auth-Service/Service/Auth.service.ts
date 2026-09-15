@@ -44,8 +44,6 @@ export const setCookies = (
     httpOnly: true,
     sameSite: "lax",
     secure: true,
-    domain: ".ultriti.com",
-    path: "/",
     expires: new Date(Date.now() + 3600000 * 24 * 30),
   });
 };
