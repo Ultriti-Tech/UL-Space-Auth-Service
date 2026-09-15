@@ -44,16 +44,16 @@ export const createUser = async (req: Request, res: Response) => {
     const {
       name,
       email,
-      password_hash,
+      password,
       role = "ADMIN",
       loginCode = "confirm",
     } = req.body;
 
-    const hashedPassword = await passwordHash(String(password_hash));
+    const hashedPassword = await passwordHash(password);
 
     const userRegister = await db.query(
       "insert into users (name,email,password_hash) values ($1,$2,$3) returning *",
-      [name, email, hashedPassword],
+      [name, email, String(hashedPassword)],
     );
 
     const userDetails = userRegister?.rows[0];
@@ -229,6 +229,8 @@ export const loginUser = async (req: Request, res: Response) => {
       [email],
     );
 
+    console.log('userDetailsFetched', userDetailsFetched?.rows)
+
     if (userDetailsFetched?.rows?.length === 0) {
       return res.status(404).json({
         success: false,
@@ -241,11 +243,11 @@ export const loginUser = async (req: Request, res: Response) => {
     const userDetails = userDetailsFetched?.rows[0];
 
     const isPasswordMatched = await comparePassword(
-      String(password),
-      String(userDetails?.password_hash),
+      password,
+      userDetails?.password_hash
     );
 
-    // console.log('isPasswordMatched', isPasswordMatched)
+    console.log('isPasswordMatched', isPasswordMatched)
 
     if (!isPasswordMatched) {
       return res.status(400).json({
