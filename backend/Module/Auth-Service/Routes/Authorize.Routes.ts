@@ -15,7 +15,11 @@ import { pool } from "../../../config/sqldb";
 
 const router = express.Router();
 
-router.get("/permission/:user_id", internalSeviceRoute, getUserPermission);
-router.get("/permission/:user_id", internalSeviceRoute, getUserPermission);
+router.get("/permission/:user_id", 
+  // internalSeviceRoute, 
+  getUserPermission);
+router.get("/permission/:user_id", 
+  // internalSeviceRoute, 
+  getUserPermission);
 
 export default router;

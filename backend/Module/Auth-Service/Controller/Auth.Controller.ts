@@ -8,7 +8,8 @@ import {
 } from "../Service/Auth.service";
 import { internalError } from "../Service/Error.service";
 import { v2 as cloudinary } from "cloudinary";
-import { CLIENT_RENEG_WINDOW } from "node:tls";
+import crypto from "crypto";
+import { sendInternshipPortalCredentialsEmail } from "../Service/Email.service";
 
 const db = pool as typeof pool & {
   query: (text: string, values?: unknown[]) => Promise<any>;
@@ -16,6 +17,38 @@ const db = pool as typeof pool & {
 const db_hr = pool_Hr as typeof pool_Hr & {
   query: (text: string, values?: unknown[]) => Promise<any>;
 };
+
+const generatePassword = async (length = 25) => {
+  const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const lowercase = "abcdefghijklmnopqrstuvwxyz";
+  const numbers = "0123456789";
+  const symbols = "!@#$%^&*()_+-=[]{}|;:,.<>?";
+
+  const allCharacters = uppercase + lowercase + numbers + symbols;
+
+  // Guarantee at least one of each type
+  const password = [
+    uppercase[crypto.randomInt(uppercase.length)],
+    lowercase[crypto.randomInt(lowercase.length)],
+    numbers[crypto.randomInt(numbers.length)],
+    symbols[crypto.randomInt(symbols.length)],
+  ];
+
+  // Fill remaining characters
+  while (password.length < length) {
+    password.push(allCharacters[crypto.randomInt(allCharacters.length)]);
+  }
+
+  // Secure Fisher-Yates shuffle
+  for (let i = password.length - 1; i > 0; i--) {
+    const j = crypto.randomInt(i + 1);
+    [password[i], password[j]] = [password[j], password[i]];
+  }
+
+  return password.join("");
+};
+
+// console.log(generatePassword());
 
 // -------------------------
 // cloudinary
@@ -45,8 +78,8 @@ export const createUser = async (req: Request, res: Response) => {
       name,
       email,
       password,
-      role = "ADMIN",
-      loginCode = "confirm",
+      role = "INTERN",
+      loginCode = "none",
     } = req.body;
 
     const hashedPassword = await passwordHash(password);
@@ -77,7 +110,7 @@ export const createUser = async (req: Request, res: Response) => {
         [userDetails.id],
       );
 
-      if (setUserRoles?.rows?.length == 0) {
+      if (setUserRoles?.rowCount === 0) {
         return res.status(404).json({
           success: false,
           message: "User not able to assign roles ",
@@ -173,8 +206,8 @@ export const createUser = async (req: Request, res: Response) => {
     );
 
     // console.log("token :- ", token);
-    setCookies("ulSpaceToken", token, req, res);
-    console.log("set token :-\n", token);
+    // setCookies("ulSpaceToken", token, req, res);
+    // console.log("set token :-\n", token);
 
     res.status(200).json({
       message: "user registered sent",
@@ -229,7 +262,7 @@ export const loginUser = async (req: Request, res: Response) => {
       [email],
     );
 
-    console.log('userDetailsFetched', userDetailsFetched?.rows)
+    console.log("userDetailsFetched", userDetailsFetched?.rows);
 
     if (userDetailsFetched?.rows?.length === 0) {
       return res.status(404).json({
@@ -244,10 +277,10 @@ export const loginUser = async (req: Request, res: Response) => {
 
     const isPasswordMatched = await comparePassword(
       password,
-      userDetails?.password_hash
+      userDetails?.password_hash,
     );
 
-    console.log('isPasswordMatched', isPasswordMatched)
+    console.log("isPasswordMatched", isPasswordMatched);
 
     if (!isPasswordMatched) {
       return res.status(400).json({
@@ -265,7 +298,7 @@ export const loginUser = async (req: Request, res: Response) => {
     );
 
     setCookies("ulSpaceToken", token, req, res);
-    
+
     console.log("token :- ", token);
 
     return res.status(200).json({
@@ -415,12 +448,21 @@ export const editUserDetail = async (req: Request, res: Response) => {
 // get qualified candidates
 export const getQualifiedCandidates = async (req: Request, res: Response) => {
   try {
+    console.log("req.body", req.body);
+    // const featchQualifiedCandidate = await db_hr.query(
+    //   `
+    //   SELECT * FROM qualified_candidates;
+    //   `,
+    //   [],
+    // );
     const featchQualifiedCandidate = await db_hr.query(
-      `SELECT 
+      `
+    SELECT
     qc.id,
     qc.candidate_id,
     qc.application_id,
     qc.interview_id,
+    qc.status,
 
     -- Candidate details
     jsonb_build_object(
@@ -442,29 +484,30 @@ export const getQualifiedCandidates = async (req: Request, res: Response) => {
         'application_type', a.application_type,
         'duration_months', a.duration_months,
         'work_mode', a.work_mode,
-        'fee', a.fee,
         'status', a.status
     ) AS application
 
-FROM qualified_candidates qc
+    FROM qualified_candidates qc
 
-INNER JOIN applications a 
-    ON qc.application_id = a.id
+    INNER JOIN applications a
+        ON qc.application_id = a.id
 
-INNER JOIN candidates c 
-    ON qc.candidate_id = c.id;
-      
+    INNER JOIN candidates c
+        ON qc.candidate_id = c.id;
       `,
       [],
     );
 
+    console.log("featchQualifiedCandidate", featchQualifiedCandidate?.rows);
     if (featchQualifiedCandidate?.rows?.length == 0) {
       return res
         .status(400)
         .json({ message: "error fetching the details", success: false });
     }
 
-    const qualifiedCandidate = featchQualifiedCandidate?.rows[0];
+    const qualifiedCandidate = featchQualifiedCandidate?.rows;
+
+    console.log("quali", qualifiedCandidate);
 
     return res.status(200).json({
       messgae: "candidate detial fetched",
@@ -473,5 +516,83 @@ INNER JOIN candidates c
     });
   } catch (error: any) {
     return internalError(error, req, res);
+  }
+};
+
+// register Intern
+export const registerIntern = async (req: Request, res: Response) => {
+  try {
+    const { name, email, role = "INTERN", interview_id } = req.body;
+
+    const password = await generatePassword(25);
+    console.log("password before :-", password);
+
+    const hashedPassword = await passwordHash(password);
+    console.log("name, email,", name, email);
+
+    const userRegister = await db.query(
+      "insert into users (name,email,password_hash) values ($1,$2,$3) returning *",
+      [name, email, String(hashedPassword)],
+    );
+
+    const userDetails = userRegister?.rows[0];
+
+    if (userRegister?.rows?.length == 0) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+        user: userDetails || null,
+      });
+    }
+
+    // intern role register -----------------------------
+    if (role == "INTERN") {
+      const setUserRoles = await db.query(
+        `INSERT INTO user_roles (user_id, role_id)
+        SELECT $1, id
+        FROM roles
+        WHERE name = 'INTERN'
+        `,
+        [userDetails.id],
+      );
+
+      console.log('interview_id', interview_id)
+
+      const updateStatus = await db_hr.query(
+        `update qualified_candidates
+        set status = 'COMPLETED'
+        WHERE id = $1
+        `,
+        [interview_id],
+      );
+
+      if (updateStatus?.rowCount == 0) {
+        return res.status(400).json({
+          success: false,
+          message: "User not able o qualify",
+          user: userDetails || null,
+        });
+      }
+
+      if (setUserRoles?.rowCount == 0) {
+        return res.status(400).json({
+          success: false,
+          message: "User not able to assign roles ",
+          user: userDetails || null,
+        });
+      }
+
+      const userDetail = userRegister.rows[0];
+      console.log("userDetail", userDetail);
+
+      await sendInternshipPortalCredentialsEmail(email, userDetail, password);
+    }
+
+    res.status(200).json({
+      message: "user registered sent",
+      userDetails: userDetails,
+    });
+  } catch (error: any) {
+    internalError(error, req, res);
   }
 };

@@ -19,44 +19,64 @@ export const isAunthenticateUser = (
   next: NextFunction,
 ) => {
   try {
-    const token = req.cookies.ulSpaceToken || req.headers["ulSpaceToken"];
-    console.log('token auth :-', token )
+    // here it is useful ofr gateway api 
+    const authHeader = req.headers.authorization;
+
+    console.log("HR Authorization:", authHeader);
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({
+        message: "Unauthorized, token not available",
+        error: "Unauthorized, token not available",
+        success: false,
+      });
+    }
+
+    const token = authHeader.split(" ")[1];
 
     if (!token) {
       return res.status(401).json({
-        message: "unauthorized, token not avalble",
-        error: "unauthorized, token not avalble",
+        message: "Unauthorized, token not available",
+        error: "Unauthorized, token not available",
         success: false,
       });
-    } else {
-      const decoded = jwt.verify(token, `${process?.env?.secretKey}`) as any;
-      if (!decoded) {
-        res.status(401).json({
-          message: "unauthorized, token is invalid",
-          error: "unauthorized, token is invalid",
-          success: false,
-        });
-      }
-      req.id = decoded.user_id;
-      req.email = decoded.email;
-      req.role = decoded.role;
-
-      next();
     }
+
+    const decoded = jwt.verify(
+      token,
+      process.env.secretKey!,
+    ) as any;
+
+    req.id = decoded.user_id;
+    req.email = decoded.email;
+    req.role = decoded.role;
+
+    next();
+
   } catch (error: any) {
-    console.log("error", error);
+    console.log("HR authentication error:", error);
 
     if (error?.name === "TokenExpiredError") {
       return res.status(401).json({
-        error: `token expired login again`,
-        message: `${error?.message}`,
+        error: "Token expired, login again",
+        message: error.message,
         success: false,
       });
     }
 
-    return res
-      .status(404)
-      .json({ err: error?.message, message: error?.message, success: false });
+    if (error?.name === "JsonWebTokenError") {
+      return res.status(401).json({
+        error: "Invalid token",
+        message: "Unauthorized, token is invalid",
+        success: false,
+      });
+    }
+
+    return res.status(500).json({
+      error: error?.message,
+      message: "Authentication failed",
+      success: false,
+    });
   }
 };
 

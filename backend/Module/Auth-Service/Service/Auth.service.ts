@@ -3,9 +3,10 @@ import jwt from "jsonwebtoken";
 import type { Request, Response } from "express";
 
 // hash the password
-export const passwordHash = async (password: string): Promise<string> => {
+export const passwordHash = async (password: any): Promise<string> => {
   // const hashPassword = async (password) =>{
   //   return await bcrypt.hash(password, 10);
+  console.log('password', password)
   const hashedPassword = await bcrypt.hash(password, 10);
   return hashedPassword;
 };
@@ -38,12 +39,11 @@ export const setCookies = (
   req: Request,
   res: Response,
 ) => {
-  console.log("set cookieName", cookieName);
-  console.log("set token", token);
   res.cookie(cookieName, token, {
     httpOnly: true,
     sameSite: "none",
     secure: true,
+        path: "/",
     expires: new Date(Date.now() + 3600000 * 24 * 30),
   });
 };

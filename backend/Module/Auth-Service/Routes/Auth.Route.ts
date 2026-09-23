@@ -5,6 +5,7 @@ import {
   getQualifiedCandidates,
   getUserDetail,
   loginUser,
+  registerIntern
 } from "../Controller/Auth.Controller";
 import { isAunthenticateUser } from "../../../middleware/auth.middleware";
 import { Authorize } from "../../../middleware/authorize.middleware";
@@ -34,6 +35,14 @@ router.get(
   isAunthenticateUser,
   Authorize("users.read"),
   getQualifiedCandidates,
+);
+
+// hr database
+router.post(
+  "/registerIntern/:interview_id",
+  isAunthenticateUser,
+  Authorize("users.create"),
+  registerIntern,
 );
 
 
