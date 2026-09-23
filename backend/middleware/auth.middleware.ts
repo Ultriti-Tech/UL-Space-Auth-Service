@@ -80,24 +80,41 @@ export const isAunthenticateUser = (
   }
 };
 
-// internal service route
 export const internalSeviceRoute = (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
-  try {
-    const serviceKey = req.headers["x-internal-service-key"];
 
-    if (!serviceKey || serviceKey !== process.env.INTERNAL_SERVICE_KEY) {
+  try {
+
+    const serviceKey =
+      req.headers["x-internal-service-key"];
+
+    if (
+      !serviceKey ||
+      serviceKey !==
+        process.env.INTERNAL_SERVICE_KEY
+    ) {
       return res.status(403).json({
         success: false,
         message: "Unauthorized service",
       });
     }
+
     next();
+
   } catch (error: any) {
-    console.log('error', error)
-    return internalError(error, req, res);
+
+    console.log(
+      "Internal service error:",
+      error,
+    );
+
+    return internalError(
+      error,
+      req,
+      res,
+    );
   }
 };

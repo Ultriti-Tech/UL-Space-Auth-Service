@@ -205,9 +205,6 @@ export const createUser = async (req: Request, res: Response) => {
       "30d",
     );
 
-    // console.log("token :- ", token);
-    // setCookies("ulSpaceToken", token, req, res);
-    // console.log("set token :-\n", token);
 
     res.status(200).json({
       message: "user registered sent",
@@ -296,10 +293,6 @@ export const loginUser = async (req: Request, res: Response) => {
       `${process.env.secretKey}`,
       "30d",
     );
-
-    setCookies("ulSpaceToken", token, req, res);
-
-    console.log("token :- ", token);
 
     return res.status(200).json({
       success: false,
