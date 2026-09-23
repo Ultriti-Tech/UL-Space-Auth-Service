@@ -22,7 +22,7 @@ export const isAunthenticateUser = (
     // here it is useful ofr gateway api 
     const authHeader = req.headers.authorization;
 
-    console.log("HR Authorization:", authHeader);
+    // console.log("auth HR Authorization:", authHeader);
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
@@ -54,7 +54,7 @@ export const isAunthenticateUser = (
     next();
 
   } catch (error: any) {
-    console.log("HR authentication error:", error);
+    // console.log("HR authentication error:", error);
 
     if (error?.name === "TokenExpiredError") {
       return res.status(401).json({
@@ -90,6 +90,8 @@ export const internalSeviceRoute = (
 
     const serviceKey =
       req.headers["x-internal-service-key"];
+
+      // console.log('serviceKey', serviceKey)
 
     if (
       !serviceKey ||

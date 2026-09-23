@@ -222,8 +222,8 @@ export const loginUser = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
 
-    console.log("email", email);
-    console.log("password", password);
+    // console.log("email", email);
+    // console.log("password", password);
 
     // const userDetailsFetched = await pool.query(
     //   `
@@ -259,7 +259,7 @@ export const loginUser = async (req: Request, res: Response) => {
       [email],
     );
 
-    console.log("userDetailsFetched", userDetailsFetched?.rows);
+    // console.log("userDetailsFetched", userDetailsFetched?.rows);
 
     if (userDetailsFetched?.rows?.length === 0) {
       return res.status(404).json({
@@ -277,7 +277,7 @@ export const loginUser = async (req: Request, res: Response) => {
       userDetails?.password_hash,
     );
 
-    console.log("isPasswordMatched", isPasswordMatched);
+    // console.log("isPasswordMatched", isPasswordMatched);
 
     if (!isPasswordMatched) {
       return res.status(400).json({
@@ -286,7 +286,7 @@ export const loginUser = async (req: Request, res: Response) => {
       });
     }
 
-    console.log("userDetails?.role", userDetails?.roles);
+    // console.log("userDetails?.role", userDetails?.roles);
 
     const token = await jwtSign(
       { email: email, user_id: userDetails?.id, role: userDetails?.roles },
@@ -312,7 +312,7 @@ export const getUserDetail = async (req: Request, res: Response) => {
   const email = req?.email;
   const role = req?.role;
   try {
-    console.log("user role :- \n", role);
+    // console.log("user role :- \n", role);
     const userDetailFetched = await db.query(
       `
  SELECT
@@ -356,8 +356,8 @@ GROUP BY
 
     const userDetail = userDetailFetched?.rows[0];
 
-    console.log("userdetail", user_id);
-    console.log("userdetail email", email);
+    // console.log("userdetail", user_id);
+    // console.log("userdetail email", email);
 
     return res
       .status(200)
@@ -416,8 +416,8 @@ export const editUserDetail = async (req: Request, res: Response) => {
       WHERE id = $${values.length}
     `;
 
-    console.log("SQL:", sql);
-    console.log("VALUES:", values);
+    // console.log("SQL:", sql);
+    // console.log("VALUES:", values);
 
     const result = await db.query(sql, values);
 
@@ -441,7 +441,7 @@ export const editUserDetail = async (req: Request, res: Response) => {
 // get qualified candidates
 export const getQualifiedCandidates = async (req: Request, res: Response) => {
   try {
-    console.log("req.body", req.body);
+    // console.log("req.body", req.body);
     // const featchQualifiedCandidate = await db_hr.query(
     //   `
     //   SELECT * FROM qualified_candidates;
@@ -491,7 +491,7 @@ export const getQualifiedCandidates = async (req: Request, res: Response) => {
       [],
     );
 
-    console.log("featchQualifiedCandidate", featchQualifiedCandidate?.rows);
+    // console.log("featchQualifiedCandidate", featchQualifiedCandidate?.rows);
     if (featchQualifiedCandidate?.rows?.length == 0) {
       return res
         .status(400)
@@ -500,7 +500,7 @@ export const getQualifiedCandidates = async (req: Request, res: Response) => {
 
     const qualifiedCandidate = featchQualifiedCandidate?.rows;
 
-    console.log("quali", qualifiedCandidate);
+    // console.log("quali", qualifiedCandidate);
 
     return res.status(200).json({
       messgae: "candidate detial fetched",
@@ -515,7 +515,8 @@ export const getQualifiedCandidates = async (req: Request, res: Response) => {
 // register Intern
 export const registerIntern = async (req: Request, res: Response) => {
   try {
-    const { name, email, role = "INTERN", interview_id } = req.body;
+    const { interview_id } = req.params;
+    const { name, email, role = "INTERN" } = req.body;
 
     const password = await generatePassword(25);
     console.log("password before :-", password);
@@ -529,6 +530,8 @@ export const registerIntern = async (req: Request, res: Response) => {
     );
 
     const userDetails = userRegister?.rows[0];
+
+    console.log('userDetails', userDetails)
 
     if (userRegister?.rows?.length == 0) {
       return res.status(404).json({
@@ -576,7 +579,7 @@ export const registerIntern = async (req: Request, res: Response) => {
       }
 
       const userDetail = userRegister.rows[0];
-      console.log("userDetail", userDetail);
+      // console.log("userDetail", userDetail);
 
       await sendInternshipPortalCredentialsEmail(email, userDetail, password);
     }

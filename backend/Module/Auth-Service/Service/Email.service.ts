@@ -72,7 +72,7 @@ export const sendInternshipPortalCredentialsEmail = async (
   const password = providedPassword || "";
 
   const portal_login_url = "https://ulspace.ultriti.com/user/login";
-  const account_settings_url = "https://ul-space.com/user/account-settings";
+  const account_settings_url = "https://ulspace.ultriti.com/user/login";
   const subject = `🎉 Welcome to Ul-Space – Your Internship Portal Account`;
 
   console.log('sending portal axcess mail to :- ', email)
